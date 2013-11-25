@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Travel modes in directions</title>
+    <style>
+		html, body,#map-canvas  {
+		margin: 0px;
+		padding: 0px
+		}
+		#map-canvas {
+		height: 250px;
+		}
+
+    </style>    
+  </head>
+  <body>
+	<div id="loading">Your directions are being calculated.</div>
+	<div id="map-canvas"></div>
+	<div id="directions"></div>
+	
+  <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+ 
+    <script>
+  function initialize() { 
+    if ( geo = getGeoLocation() ){
+      //console.log("Geo enabled");
+    } else{
+      //console.log("not supported");
+    }
+    geo.getCurrentPosition(show_map , errorCallback, { enableHighAccuracy: true });
+  }
+  function getGeoLocation(){
+    try {
+      if( !! navigator.geolocation ) return navigator.geolocation;
+      else return undefinded;
+    } catch (e){
+      return undefinded;
+    }
+  }
+  function show_map(position) {
+  directionsDisplay = new google.maps.DirectionsRenderer();
+    var mapOptions = {
+      zoom: 18,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      center: gps
+    };
+    var lat = position.coords.latitude;
+    var lon = position.coords.longitude;
+    var geo;
+    var directionsDisplay;
+    var directionsService = new google.maps.DirectionsService();
+    var map;
+    
+    var gps = new google.maps.LatLng(lat,lon);
+    var toLocation = new google.maps.LatLng(28.048297,-82.517888);
+    
+    map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    directionsDisplay.setMap(map);
+	    
+	  var selectedMode ='DRIVING';//document.getElementById('mode').value;
+	  var request = {
+	      origin: gps,
+	      destination: toLocation,
+	      // Note that Javascript allows us to access the constant
+	      // using square brackets and a string value as its
+	      // "property."
+	      travelMode: google.maps.TravelMode[selectedMode]
+	  };
+  
+	  directionsService.route(request, function(response, status) {
+		  console.log(status);
+		  console.log(response);
+
+   	    if (status == google.maps.DirectionsStatus.NOT_FOUND) {
+			    var list = '<p> Directions Not Found. </p>' ;
+			    $('#directions').append(list);
+			
+	    }
+	  
+    if (status == google.maps.DirectionsStatus.OK) {
+      directionsDisplay.setDirections(response);
+      	      $('#loading').hide();
+
+      var steps = response.routes[0].legs[0].steps;
+		for (var i = 0; i < steps.length; i++) { 
+		    var list = '<p>'+i+': '+steps[i].instructions+'<br>Distance: '+ steps[i].distance.text +'<br>Time: ' + steps[i].duration.text+'</p>' ;
+		    $('#directions').append(list);
+		}
+    }
+  });
+
+  }// end show map
+
+  function errorCallback (){
+    console.log('error');
+  }
+
+google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+  </body>
+</html>
